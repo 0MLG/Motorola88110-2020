@@ -1,0 +1,607 @@
+;  Macros
+
+LEA: MACRO (reg, ETIQ)
+     or reg, r0,low(ETIQ)
+     or.u reg, reg, high(ETIQ)
+     ENDMACRO
+                
+PUSH: MACRO (ra)
+      subu r30, r30,4
+      st ra,r30,r0
+      ENDMACRO
+	  
+POP: MACRO(ra)
+     ld ra, r30, 0
+     addu r30, r30, 4
+     ENDMACRO
+	 
+; Pruebas
+
+org 1000
+
+PRUEBANFIL:	LEA(r30, 0x0000F000)
+			;addu r10,r0,5
+			subu r11,r0,1
+			;PUSH(r10)		; 5
+			;bsr nFiltrados
+			;POP(r10)
+			PUSH(r11)		; -1
+			bsr nFiltrados
+			stop
+
+PRUEBASQRT1D:	LEA(r30, 0x0000F000)
+				addu r10,r0,25
+				PUSH(r10)
+				bsr Sqrt1d
+				stop
+
+PRUEBACOMP:	LEA(r30, 0x0000F000)
+			LEA(r10,IMAGENC1)
+			LEA(r11,IMAGENC2)
+			PUSH(r10)
+			PUSH(r11)
+			bsr Comp
+			stop
+
+PRUEBAVP:	LEA(r30, 0x0000F000)
+			LEA(r3, SUBIMAGENVP)
+			LEA(r4,FILTROVP)
+			PUSH(r4)
+			PUSH(r3)
+			bsr ValorPixel
+			addu r30, r30, 8
+			stop
+	 
+PRUEBASUBM: 	LEA    (r30, 0x0000F000)  ; inicialización del puntero de pila
+				addu r10,r0,1
+				addu r11,r0,1
+				LEA(r13, IMAGENSUBM)
+				LEA(r12, subimagen)
+				PUSH(r10)
+				PUSH(r11)
+				PUSH(r12)
+				PUSH(r13)
+				bsr SubMatriz
+				stop
+
+PRUEBAFPIX:	LEA(r30, 0x0000F000)
+			LEA(r3, IMAGENFP)
+			LEA(r2, FILTROFP)
+			or r4,r0,2
+			PUSH(r2)
+			PUSH(r4)
+			PUSH(r4)
+			PUSH(r3)
+			xor r29,r29,r29
+			bsr FilPixel
+			stop
+			
+PRUEBAFILTRO:	LEA(r30, 60000)    ; Inicializacion del puntero de pila
+				LEA(r10,IMAGENF)
+				LEA(r11,FILTRADAF)
+				LEA(r12,FILTROF)
+				PUSH(r12)
+				PUSH(r11)
+				PUSH(r10)
+				bsr Filtro
+				stop
+			
+PRUEBAFREC:	LEA (r30, 60000)
+			LEA (r10,IMAGENFREC)
+			LEA (r11,FILTRADAFREC)
+			LEA (r12,FILTROFREC)
+			addu r14,r0,400
+			addu r13,r0,4
+			PUSH(r13)
+			PUSH(r14)
+			PUSH(r12)
+			PUSH(r11)
+			PUSH(r10)
+			bsr FiltRec
+			stop
+			
+PRUEBASUM1: LEA(r30, 0x0000F000)  ; inicialización del puntero de pila
+			addu r10,r0,2
+			addu r11,r0,2
+			LEA(r13, IMAGENSUBM1)
+			LEA(r12, subimagen1)
+			PUSH(r10)
+			PUSH(r11)
+			PUSH(r12)
+			PUSH(r13)
+			bsr SubMatriz
+			stop
+			
+
+			
+PRUEBAFREC1:	LEA (r30, 60000)
+				LEA (r10,IMAGENFREC1)
+				LEA (r11,FILTRADAFREC1)
+				LEA (r12,FILTROFREC1)
+				addu r14,r0,0
+				addu r13,r0,2
+				PUSH(r13)
+				PUSH(r14)
+				PUSH(r12)
+				PUSH(r11)
+				PUSH(r10)
+				bsr FiltRec
+				stop
+		
+; Imagenes
+
+org 0
+nF: data 0
+
+org 2000
+	  
+IMAGENC1:
+data 4, 8
+data 0x00000000, 0x00000000
+data 0x00000000, 0x00002100
+data 0x00000000, 0x00000000
+data 0x00000000, 0x00000000
+	 
+IMAGENC2:
+data 4, 8
+data 0x00000000, 0x00000000
+data 0x00000000, 0x00000000
+data 0x00000000, 0x00000000
+data 0x00000000, 0x00000000
+	  
+SUBIMAGENVP:
+data 0x00000000, 0x00000055, 0x00
+
+FILTROVP: 
+data 0, 1, 0, 1, 0, 1
+data 0, 1, 1, 1, 0, 1
+data 0, 1, 0, 1, 0, 1
+	  
+IMAGENSUBM:
+data 3, 3
+data 0x40302010, 0x80706050, 0x90
+		   
+subimagen: 
+data 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
+
+IMAGENFP:
+data 5, 5
+data 0x44332211, 0x03020155
+data 0x22210504, 0x31252423
+data 0x35343332, 0x44434241
+data 0x00000045
+
+FILTROFP: 
+data 0, 1, 0, 1, 0, 1
+data 0, 1, -5, -5, 0, 1
+data 0, 1, 0, 1, 0, 1	
+
+IMAGENF:
+data 4, 8
+data 0x04030201, 0x07060504
+data 0x14134211, 0x17168514
+data 0x24232221, 0x27262574
+data 0x34333231, 0x37363534
+
+FILTRADAF:
+res 40
+	 
+FILTROF: 
+data 0, 1, -3, 1, 0, 1
+data 0, 1, 4, 1, 0, 1
+data 0, 1, 0, 1, 0, 1
+
+IMAGENFREC:
+data 4, 4
+data 0x04030201, 0x0D0E0F10, 0x05040302, 0x23222120
+
+FILTROFREC: 
+data 1, 8, 1, 8, 1, 8
+data 1, 8, 0, 8, 1, 8
+data 1, 8, 1, 8, 1, 8
+
+FILTRADAFREC: 
+res 24
+data 0x55555555, 0x55555555
+
+IMAGENSUBM1:
+data 5, 5
+data 0x04030201, 0x08070605
+data 0x12111009, 0x16151413
+data 0x20191817, 0x24232221
+data 0x28272625
+		   
+subimagen1: 
+data 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
+
+IMAGENFREC1:
+data 4, 8
+data 0xFF0000FF, 0xFF0000FF
+data 0xFF0000FF, 0xFF0000FF
+data 0xFF0000FF, 0xFF0000FF
+data 0xFF0000FF, 0xFF0000FF
+
+FILTROFREC1: 
+data 1, 4, 0, 4, 1, 4
+data 0, 4, 0, 4, 0, 4
+data 1, 4, 0, 4, 1, 4
+
+FILTRADAFREC1: 
+res 24
+data 0xAAAAAAAA, 0xAAAAAAAA
+	 
+;nFiltrados
+
+nFiltrados: ld r20, r30, 0			; oper
+			cmp r21, r20, 0
+			bb0 lt, r21, nFilMayor
+			ld r20, r0, 0			; nF
+			addu r20, r20, 1		; nF++
+nFilMayor:	st r20, r0, 0			; nF <- oper
+nFilFin:	ld r29,r0,0				
+			jmp(r1)
+			
+;Sqrt1d
+
+Sqrt1d:		ld r20, r30, 0			;Num
+			cmp r21, r20, 2
+			bb1 lt, r21, Sqrt1dMen2
+			
+			mulu r22, r20, 100		; a = Numx100 
+			addu r23, r0, 1			; b = 1
+			
+Sqrt1dBuc:	addu r22, r22, r23
+			divu r22, r22, 2		; a = (a+b)/2
+			mulu r23, r20, 100
+			divu r23, r23, r22		; b = (Numx100)/a
+			cmp r21, r22, r23
+			bb1 lt, r21, Sqrt1dInt
+			
+Sqrt1dComp:	subu r24, r22, r23		; a-b
+			cmp r21, r24, 1
+			bb1 gt, r21, Sqrt1dBuc
+			br Sqrt1dFin
+			
+Sqrt1dInt:	or r24, r22, r22
+			or r22, r23, r23
+			or r23, r24, r24
+			br Sqrt1dComp			; a<->b
+			
+Sqrt1dMen2:	mulu r23, r20, 10
+Sqrt1dFin:	or r29, r23, 0
+			jmp(r1)
+			
+; Comp
+
+Comp:		PUSH(r1)
+			ld r20, r30, 4		; Imagen1
+			ld r21, r30, 8		; Imagen2
+			ld r22, r20, 0		; M
+			ld r23, r20, 4		; N
+			mulu r22, r22, r23	; MxN (contador)
+			addu r20, r20, 8
+			addu r21, r21, 8
+			or r23, r0, 0		; Dif = 0
+	
+CompBuc:	ld.bu r24, r20, 0	; IM1ij
+			ld.bu r25, r21, 0	; IM2ij
+			sub r24, r24, r25
+			muls r24, r24, r24
+			addu r23, r23, r24	; Dif = Dif + (IM1ij - IM2ij)^2
+			addu r20, r20, 1	; IM1ij++
+			addu r21, r21, 1	; IM2ij++
+			subu r22, r22, 1	; MxN--
+			cmp r26, r22, 0
+			bb0 eq, r26, CompBuc
+			
+			PUSH(r23)
+			bsr Sqrt1d			; Sqrt1d(Dif)
+			POP(r23)
+			POP(r1)
+			jmp(r1)
+		
+;ValorPixel
+
+ValorPixel:	ld r20, r30, 0		; SubImg
+			ld r21, r30, 4		; MFiltro
+			or r22, r0, 0		; ACC
+			addu r23, r0, 9		; contador
+			
+VPixelBuc:	ld.bu r24, r20, 0	
+			ld r25, r21, 0		; N
+			ld r26, r21, 4		; D
+			mulu r24, r24, 256
+			muls r24, r24, r25
+			divs r24, r24, r26	
+			add r22, r22, r24	; ACC = ACC + (pixel x 256 x N)/D
+			addu r20, r20, 1
+			addu r21, r21, 8	
+			subu r23, r23, 1
+			cmp r27, r23, 0
+			bb0 eq, r27, VPixelBuc
+			
+			divs r22, r22, 256
+			or r29, r22, 0
+			jmp(r1)
+			
+;SubMatriz
+
+SubMatriz:    	ld r20, r30, 0        ; Imagen
+				ld r21, r20, 0        ; M
+				ld r22, r20, 4        ; N
+				ld r23, r30, 4        ; SubImg
+				ld r24, r30, 8        ; i
+				ld r25, r30, 12       ; j
+
+				subu r26, r24, 1
+				mulu r26, r26, r22
+				addu r26, r26, r25
+				subu r26, r26, 1    ; (i-1) x N+j-1
+				addu r20, r20, 8
+
+				or r28, r0, 0
+				addu r28, r28, 2
+SubMatrizBuc1:  ld.bu r27, r20, r26
+				st.b r27, r23, 0
+				addu r26, r26, 1    ; Imagen++
+				addu r23, r23, 1    ; SubImg++
+				subu r28, r28, 1
+				cmp r2, r28, 0
+				bb0 eq, r2, SubMatrizBuc1
+
+				ld.bu r27, r20, r26
+				st.b r27, r23, 0
+				mulu r26, r24, r22
+				addu r26, r26, r25
+				subu r26, r26, 1    ; iN+j-1
+				addu r23, r23, 1    ; SubImg++
+
+				addu r28, r28, 2
+SubMatrizBuc2:  ld.bu r27, r20, r26
+				st.b r27, r23, 0
+				addu r26, r26, 1    ; Imagen++
+				addu r23, r23, 1    ; SubImg++
+				subu r28, r28, 1
+				cmp r2, r28, 0
+				bb0 eq, r2, SubMatrizBuc2
+
+				ld.bu r27, r20, r26
+				st.b r27, r23, 0
+				addu r26, r24, 1
+				mulu r26, r26, r22
+				addu r26, r26, r25
+				subu r26, r26, 1    ; (i+1)N+j-1
+				addu r23, r23, 1    ; SubImg++
+
+				addu r28, r28, 2
+SubMatrizBuc3: 	ld.bu r27, r20, r26
+				st.b r27, r23, 0
+				addu r26, r26, 1    ; Imagen++
+				addu r23, r23, 1    ; SubImg++
+				subu r28, r28, 1
+				cmp r2, r28, 0
+				bb0 eq, r2, SubMatrizBuc3
+
+				ld.bu r27, r20, r26
+				st.b r27, r23, 0
+
+				jmp(r1)
+			
+; FilPixel
+
+FilPixel:	PUSH(r1)
+			PUSH(r31)
+			or r31, r30, r0
+			subu r30, r30, 12	
+			ld r20, r31, 8		; Imagen
+			ld r21, r20, 0		; M
+			ld r22, r20, 4		; N
+			ld r23, r31, 12		; i
+			ld r24, r31, 16		; j
+			ld r25, r31, 20		; MFiltro
+			
+			cmp r26, r23, 0
+			bb0 ne, r26, FPixBorde
+			cmp r26, r24, 0
+			bb0 ne, r26, FPixBorde
+			subu r21, r21, 1	; M-1
+			subu r22, r22, 1	; N-1
+			cmp r26, r21, r23
+			bb0 ne, r26, FPixBorde
+			cmp r26, r22, r24
+			bb0 ne, r26, FPixBorde
+			
+			or r27, r30, 0		; SubImg
+			PUSH(r24)
+			PUSH(r23)
+			PUSH(r27)
+			PUSH(r20)
+			bsr SubMatriz
+			POP(r20)
+			POP(r27)
+			POP(r23)
+			POP(r24)
+			ld r25, r31, 20		; MFiltro
+			or r27, r30, 0		; SubImg
+			PUSH(r25)
+			PUSH(r27)
+			bsr ValorPixel
+			POP(r27)
+			POP(r25)
+			
+			cmp r26, r29, 0
+			bb1 lt, r26, FPixMen
+			cmp r26, r29, 255
+			bb1 gt, r26, FPixMay
+			br FPixFin
+			
+FPixBorde:	ld r22, r20, 4	
+			mulu r23, r23, r22
+			addu r23, r23, r24	; i*N+j
+			addu r20, r20, 8
+			ld.bu r29, r20, r23
+			br FPixFin
+			
+FPixMen:	or r29, r0, 0
+			br FPixFin
+			
+FPixMay:	addu r29, r0, 255
+			
+FPixFin:	or r30, r31, 0
+			POP(r31)
+			POP(r1)
+			jmp(r1)
+			
+; Filtro
+
+Filtro:		PUSH(r1)
+			PUSH(r31)
+			or r31,r30,0
+			subu r30,r30,8	
+			ld r20, r31, 8		; Imagen
+			ld r21, r20, 0		; M
+			ld r22, r20, 4		; N
+			ld r23, r31, 12		; ImFiltrada
+			ld r24, r31, 16		; MFiltro
+			st r0, r31, -8 		; i=0
+			st r0, r31, -4 		; j=0
+			
+			st r21, r23, 0
+			st r22, r23, 4
+			
+FiltroBuc:	ld r25, r31, -8		; i
+			ld r26, r31, -4		; j
+			PUSH(r24)
+			PUSH(r26)
+			PUSH(r25)
+			PUSH(r20)
+			bsr FilPixel
+			POP(r20)
+			POP(r25)
+			POP(r26)
+			POP(r24)
+			ld r23, r31, 12		; ImFiltrada
+			ld r21, r23, 0		; M
+			ld r22, r23, 4		; N
+			ld r25, r31, -8		; i
+			ld r26, r31, -4		; j
+			mulu r27, r25, r22
+			addu r27, r27, r26	; ixN+j
+			addu r27, r27, 8
+			st.b r29, r23, r27
+			addu r26, r26, 1	; j++
+			st.b r26, r31, -4
+			ld r20, r31, 8		; Imagen
+			ld r24, r31, 16		; MFiltro
+			cmp r28, r26, r22
+			bb1 lo, r28, FiltroBuc
+			addu r25, r25, 1	; i++
+			st r25, r31, -8
+			st r0, r31,-4		; j=0
+			cmp r28, r25, r21
+			bb1 lo, r28, FiltroBuc
+			
+			or r30, r31, 0
+			POP(r31)
+			POP(r1)
+			jmp(r1)
+			
+; FiltRec
+
+FiltRec:	PUSH(r1)
+			PUSH(r31)
+			or r31, r30, 0
+			ld r20, r31, 8		; ImagenIn
+			ld r21, r20, 0		; M
+			ld r22, r20, 4		; N
+			ld r23, r31, 12		; ImagenOut
+			ld r24, r31, 16		; MFiltro
+			ld r25, r31, 20		; NCambios
+			ld r26, r31, 24		; MaxFiltrados
+			
+			mulu r21, r21, r22
+			addu r21, r21, 12	; MxN + 12
+FRecMul4:	divu r27, r21, 4
+			mulu r27, r27, 4
+			cmp r28, r21, r27
+			bb1 eq, r28, FRecFiltro
+			addu r21, r21, 1
+			br FRecMul4			
+			
+FRecFiltro:	subu r30, r30, r27
+			PUSH(r24)			; MFiltro
+			PUSH(r23)			; ImagenOut
+			PUSH(r20)			; ImagenIn
+			bsr Filtro
+			POP(r20)
+			POP(r23)
+			POP(r24)
+			ld r23, r31, 12		; ImagenOut
+			ld r2, r23, 0		; MOut
+			ld r3, r23, 4		; NOut
+			addu r23, r23, 8
+			or r4, r30, 0		; ImagenTmp
+			st r2, r4, 0		; MTemp
+			st r3, r4, 4		; NTemp
+			addu r4, r4, 8
+			mulu r2, r2, r3		; MxN
+			
+FRecBucCop:	ld.bu r6, r23, 0
+			st.b r6, r4, 0
+			addu r23, r23, 1
+			addu r4, r4, 1
+			subu r2, r2, 1
+			cmp r7, r2, 0
+			bb0 eq, r7, FRecBucCop
+			
+			ld r20, r31, 8		; ImagenIn
+			ld r23, r31, 12		; ImagenOut
+			PUSH(r23)
+			PUSH(r20)
+			bsr Comp
+			POP(r20)
+			POP(r23)
+			
+			st r29, r31,-4
+			subu r8, r0, 1
+			PUSH(r8)
+			bsr nFiltrados
+			POP(r8)
+			
+			ld r25, r31, 20		; NCambios Original
+			ld r26, r31, 24		; MaxFiltrados Original
+			st r29, r31, 24		; MaxFiltrados
+			ld r8, r31, -4		
+			st r8, r31, 20		; NCambios
+			
+			cmp r28, r8, r25
+			bb0 lo, r28, FRecComp
+			or r29, r0, 0
+			br FRecFin
+			
+FRecComp:	cmp r28, r29, r26
+			bb0 eq, r28, FRecRecurs
+			sub r29, r0, 1
+			br FRecFin
+			
+FRecRecurs:	ld r23, r31, 12		; ImagenOut
+			ld r24, r31, 16		; MFiltro
+			or r4, r30, 0		; ImagenTmp
+			PUSH(r26)
+			PUSH(r25)
+			PUSH(r24)
+			PUSH(r23)
+			PUSH(r4)
+			bsr FiltRec
+			POP(r4)
+			POP(r23)
+			POP(r24)
+			POP(r25)
+			st r25, r31, 20
+			POP(r26)
+			st r26, r31, 24
+			
+FRecFin:	or r30, r31, 0		 
+			POP(r31)
+			POP(r1)
+			jmp(r1)
